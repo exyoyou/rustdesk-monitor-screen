@@ -9,7 +9,7 @@ import youyou.monitor.screen.core.domain.model.ImageFrame
 import youyou.monitor.screen.core.domain.model.MonitorConfig
 import youyou.monitor.screen.core.domain.usecase.CleanStorageUseCase
 import youyou.monitor.screen.core.domain.usecase.ManageTemplatesUseCase
-import youyou.monitor.screen.infra.logger.Log
+import youyou.monitor.logger.Log
 import youyou.monitor.screen.infra.network.WebDavClient
 import youyou.monitor.screen.infra.processor.AdvancedFrameProcessor
 import youyou.monitor.screen.core.domain.repository.ConfigRepository
@@ -511,7 +511,7 @@ class MonitorService private constructor(
             Log.w(TAG, "释放TemplateMatcherManager失败: ${e.message}")
         }
 
-        youyou.monitor.screen.infra.logger.Log.shutdown()
+        Log.shutdown()
 
         try {
             val connectivityManager =

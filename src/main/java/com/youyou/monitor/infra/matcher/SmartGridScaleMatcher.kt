@@ -6,7 +6,7 @@ import youyou.monitor.screen.core.domain.model.MatchResult
 import youyou.monitor.screen.core.domain.model.MonitorConfig
 import youyou.monitor.screen.core.domain.repository.ConfigRepository
 import youyou.monitor.screen.core.matcher.TemplateMatcher
-import youyou.monitor.screen.infra.logger.Log
+import youyou.monitor.logger.Log
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.Mat

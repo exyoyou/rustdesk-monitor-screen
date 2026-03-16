@@ -8,7 +8,7 @@ import youyou.monitor.screen.core.domain.usecase.CleanStorageUseCase
 import youyou.monitor.screen.core.domain.usecase.ManageTemplatesUseCase
 import youyou.monitor.screen.core.matcher.TemplateMatcher
 import youyou.monitor.screen.core.matcher.TemplateMatcherManager
-import youyou.monitor.screen.infra.logger.Log
+import youyou.monitor.logger.Log
 import youyou.monitor.screen.infra.processor.AdvancedFrameProcessor
 import youyou.monitor.screen.infra.repository.ConfigRepositoryImpl
 import youyou.monitor.screen.infra.repository.StorageRepositoryImpl

@@ -5,7 +5,7 @@ import youyou.monitor.screen.core.domain.model.MonitorConfig
 import youyou.monitor.screen.core.domain.repository.StorageRepository
 import youyou.monitor.screen.core.domain.repository.TemplateRepository
 import youyou.monitor.screen.core.matcher.TemplateMatcherManager
-import youyou.monitor.screen.infra.logger.Log
+import youyou.monitor.logger.Log
 import youyou.monitor.screen.infra.network.WebDavClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

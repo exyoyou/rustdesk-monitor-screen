@@ -6,7 +6,7 @@ import youyou.monitor.screen.core.domain.model.MonitorConfig
 import youyou.monitor.screen.core.domain.model.WebDavServer
 import youyou.monitor.screen.core.domain.repository.ConfigRepository
 import youyou.monitor.screen.core.domain.repository.StorageRepository
-import youyou.monitor.screen.infra.logger.Log
+import youyou.monitor.logger.Log
 import youyou.monitor.screen.infra.network.WebDavClient
 import kotlinx.coroutines.flow.Flow
 import org.json.JSONObject

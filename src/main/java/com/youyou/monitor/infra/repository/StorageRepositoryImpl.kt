@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import youyou.monitor.screen.core.domain.model.MonitorConfig
 import youyou.monitor.screen.core.domain.repository.StorageRepository
-import youyou.monitor.screen.infra.logger.Log
+import youyou.monitor.logger.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

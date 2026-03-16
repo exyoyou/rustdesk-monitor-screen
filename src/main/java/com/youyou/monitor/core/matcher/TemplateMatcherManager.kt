@@ -3,7 +3,7 @@ package youyou.monitor.screen.core.matcher
 import android.content.Context
 import youyou.monitor.screen.core.domain.model.MonitorConfig
 import youyou.monitor.screen.core.domain.repository.ConfigRepository
-import youyou.monitor.screen.infra.logger.Log
+import youyou.monitor.logger.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
