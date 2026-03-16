@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/home/youyou/rustdesk/flutter/android/monitor-screen/.cxx/Debug/6xgj1k56/x86_64",
+  "command": "/home/youyou/Android/Sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=x86_64-none-linux-android26 --sysroot=/home/youyou/Android/Sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Dyoyo_EXPORTS -std=c++17 -g  -fno-limit-debug-info -fPIC -o CMakeFiles/yoyo.dir/yoyo.cpp.o -c /home/youyou/rustdesk/flutter/android/monitor-screen/src/main/cpp/yoyo.cpp",
+  "file": "/home/youyou/rustdesk/flutter/android/monitor-screen/src/main/cpp/yoyo.cpp",
+  "output": "CMakeFiles/yoyo.dir/yoyo.cpp.o"
+}
+]
