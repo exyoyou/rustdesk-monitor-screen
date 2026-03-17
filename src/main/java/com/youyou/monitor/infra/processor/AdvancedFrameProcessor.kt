@@ -39,7 +39,7 @@ class AdvancedFrameProcessor(
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     @Volatile
-    private var cachedConfig: youyou.monitor.screen.core.domain.model.MonitorConfig? = null
+    private var cachedConfig: MonitorConfig? = null
 
     init {
         scope.launch {
@@ -81,7 +81,7 @@ class AdvancedFrameProcessor(
         if (!started) return@withContext false
 
         val now = System.currentTimeMillis()
-        val cfg = cachedConfig ?: youyou.monitor.screen.core.domain.model.MonitorConfig.default()
+        val cfg = cachedConfig ?: MonitorConfig.default()
 
         try {
             processFrameInternal(frame, now, cfg)
@@ -94,7 +94,7 @@ class AdvancedFrameProcessor(
     fun canProcessNow(): Boolean {
         if (!running) return false
         if (isProcessing.get()) return false
-        val config = cachedConfig ?: youyou.monitor.screen.core.domain.model.MonitorConfig.default()
+        val config = cachedConfig ?: MonitorConfig.default()
         val interval = if (config.detectPerSecond > 0) 1000 / config.detectPerSecond else 500
         return System.currentTimeMillis() - lastDetectTime.get() >= interval
     }
@@ -116,7 +116,7 @@ class AdvancedFrameProcessor(
             lastLogTime.set(now)
         }
 
-        val config = cachedConfig ?: youyou.monitor.screen.core.domain.model.MonitorConfig.default()
+        val config = cachedConfig ?: MonitorConfig.default()
         val interval = if (config.detectPerSecond > 0) 1000 / config.detectPerSecond else 500
         if (now - lastDetectTime.get() < interval) {
             if (count % 100L == 0L) {
@@ -189,7 +189,7 @@ class AdvancedFrameProcessor(
     private suspend fun processFrameInternal(
         frame: ImageFrame,
         now: Long,
-        config: youyou.monitor.screen.core.domain.model.MonitorConfig
+        config: MonitorConfig
     ) {
         var bmp: Bitmap? = null
         var mat: Mat? = null

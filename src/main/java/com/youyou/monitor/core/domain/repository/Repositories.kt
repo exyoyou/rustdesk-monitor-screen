@@ -1,12 +1,6 @@
 package youyou.monitor.screen.core.domain.repository
 
-import youyou.monitor.config.repository.ConfigRepository
 import youyou.monitor.config.model.MonitorConfig
-
-/**
- * 配置仓储接口
- */
-typealias ConfigRepository = youyou.monitor.config.repository.ConfigRepository
 
 /**
  * 模板仓储接口
@@ -27,8 +21,3 @@ interface TemplateRepository {
      */
     fun updateConfig(config: MonitorConfig)
 }
-
-/**
- * 存储仓储接口
- */
-typealias StorageRepository = youyou.monitor.sync.storage.StorageRepository

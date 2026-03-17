@@ -40,6 +40,3 @@ data class ImageFrame(
         return result
     }
 }
-
-typealias WebDavServer = youyou.monitor.config.model.WebDavServer
-typealias MonitorConfig = youyou.monitor.config.model.MonitorConfig

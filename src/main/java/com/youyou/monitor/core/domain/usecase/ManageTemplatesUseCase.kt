@@ -5,6 +5,8 @@ import youyou.monitor.webdav.WebDavClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import youyou.monitor.config.repository.ConfigRepository
+import youyou.monitor.sync.storage.StorageRepository
 
 /**
  * 模板管理用例
@@ -48,8 +50,8 @@ class ManageTemplatesUseCase(
  * 存储清理用例
  */
 class CleanStorageUseCase(
-    private val storage: youyou.monitor.screen.core.domain.repository.StorageRepository,
-    private val config: youyou.monitor.screen.core.domain.repository.ConfigRepository
+    private val storage: StorageRepository,
+    private val config: ConfigRepository
 ) {
     /**
      * 清理超出限制的文件

@@ -99,7 +99,7 @@ class MonitorService private constructor(
     private val configRepositoryImpl: ConfigRepositoryImpl by inject()
     private val templateRepository: youyou.monitor.screen.core.domain.repository.TemplateRepository by inject()
     private val templateRepositoryImpl: TemplateRepositoryImpl by inject()
-    private val storageRepository: youyou.monitor.screen.core.domain.repository.StorageRepository by inject()
+    private val storageRepository: StorageRepository by inject()
 
     @Volatile
     private var scope: CoroutineScope? = null
@@ -295,8 +295,8 @@ class MonitorService private constructor(
     }
 
     private suspend fun configureWebDavDirect(
-        server: youyou.monitor.screen.core.domain.model.WebDavServer,
-        client: youyou.monitor.webdav.WebDavClient
+        server: WebDavServer,
+        client: WebDavClient
     ) = withContext(Dispatchers.IO) {
         try {
             Log.i(TAG, "正在使用最快的WebDAV服务器: ${server.url}")
@@ -431,7 +431,7 @@ class MonitorService private constructor(
 
             Log.i(TAG, "当前网络 - WiFi: $isWifi, 移动数据: $isCellular")
 
-            var fastestServer: youyou.monitor.screen.core.domain.model.WebDavServer? = null
+            var fastestServer: WebDavServer? = null
             var fastestClient: WebDavClient? = null
             var fastestResponseTime = Long.MAX_VALUE
 
@@ -589,7 +589,7 @@ class MonitorService private constructor(
     }
 
     fun getRootDirPath(): String {
-        val storageRepo: youyou.monitor.screen.core.domain.repository.StorageRepository by inject()
+        val storageRepo: StorageRepository by inject()
         return storageRepo.getRootDirPath()
     }
 
