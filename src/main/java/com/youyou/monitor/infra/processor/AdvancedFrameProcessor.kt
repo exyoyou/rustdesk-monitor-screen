@@ -2,8 +2,9 @@ package youyou.monitor.screen.infra.processor
 
 import android.graphics.Bitmap
 import youyou.monitor.screen.core.domain.model.ImageFrame
-import youyou.monitor.screen.core.domain.repository.ConfigRepository
-import youyou.monitor.screen.core.domain.repository.StorageRepository
+import youyou.monitor.config.model.MonitorConfig
+import youyou.monitor.config.repository.ConfigRepository
+import youyou.monitor.sync.storage.StorageRepository
 import youyou.monitor.screen.core.matcher.TemplateMatcherManager
 import youyou.monitor.logger.Log
 import kotlinx.coroutines.CoroutineScope

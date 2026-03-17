@@ -1,9 +1,7 @@
 package youyou.monitor.screen.core.domain.repository
 
-import android.graphics.Bitmap
-import youyou.monitor.screen.core.domain.model.MonitorConfig
-import kotlinx.coroutines.flow.Flow
-import java.io.File
+import youyou.monitor.config.repository.ConfigRepository
+import youyou.monitor.config.model.MonitorConfig
 
 /**
  * 配置仓储接口
@@ -33,59 +31,4 @@ interface TemplateRepository {
 /**
  * 存储仓储接口
  */
-interface StorageRepository {
-    /**
-     * 保存截图（Bitmap）
-     */
-    suspend fun saveScreenshot(bitmap: Bitmap, filename: String): Result<String>
-
-    /**
-     * 获取总存储大小
-     */
-    suspend fun getTotalSize(): Result<Long>
-
-    /**
-     * 删除最旧的文件（释放指定字节数）
-     */
-    suspend fun deleteOldestFiles(bytes: Long): Result<Int>
-
-    /**
-     * 获取待上传文件列表
-     */
-    suspend fun getPendingUploadFiles(): List<String>
-
-    /**
-     * 获取根目录路径
-     */
-    fun getRootDirPath(): String
-
-    /**
-     * 获取根目录（File对象）
-     */
-    fun getRootDir(): File
-
-    /**
-     * 列出所有截图文件
-     */
-    suspend fun listScreenshots(): Result<List<File>>
-
-    /**
-     * 列出所有视频文件
-     */
-    suspend fun listVideos(): Result<List<File>>
-
-    /**
-     * 获取截图目录
-     */
-    fun getScreenshotDirectory(): File
-
-    /**
-     * 获取视频目录
-     */
-    fun getVideoDirectory(): File
-
-    /**
-     * 更新配置（用于动态路径调整）
-     */
-    fun updateConfig(config: MonitorConfig)
-}
+typealias StorageRepository = youyou.monitor.sync.storage.StorageRepository

@@ -2,7 +2,7 @@ package youyou.monitor.screen.core.matcher
 
 import android.content.Context
 import android.util.Log
-import youyou.monitor.screen.core.domain.repository.ConfigRepository
+import youyou.monitor.config.repository.ConfigRepository
 import youyou.monitor.screen.infra.matcher.GrayscaleMultiScaleMatcher
 import youyou.monitor.screen.infra.matcher.SmartGridScaleMatcher
 

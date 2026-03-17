@@ -1,7 +1,7 @@
 package youyou.monitor.screen.core.domain.usecase
 
 import youyou.monitor.screen.core.domain.repository.TemplateRepository
-import youyou.monitor.screen.infra.network.WebDavClient
+import youyou.monitor.webdav.WebDavClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch

@@ -6,16 +6,18 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import youyou.monitor.screen.core.domain.model.ImageFrame
-import youyou.monitor.screen.core.domain.model.MonitorConfig
+import youyou.monitor.config.model.MonitorConfig
+import youyou.monitor.config.model.WebDavServer
 import youyou.monitor.screen.core.domain.usecase.CleanStorageUseCase
 import youyou.monitor.screen.core.domain.usecase.ManageTemplatesUseCase
 import youyou.monitor.logger.Log
-import youyou.monitor.screen.infra.network.WebDavClient
+import youyou.monitor.webdav.WebDavClient
 import youyou.monitor.screen.infra.processor.AdvancedFrameProcessor
-import youyou.monitor.screen.core.domain.repository.ConfigRepository
-import youyou.monitor.screen.infra.repository.ConfigRepositoryImpl
+import youyou.monitor.config.repository.ConfigRepository
+import youyou.monitor.sync.storage.StorageRepository
 import youyou.monitor.screen.infra.repository.TemplateRepositoryImpl
-import youyou.monitor.screen.infra.task.ScheduledTaskManager
+import youyou.monitor.sync.config.ConfigRepositoryImpl
+import youyou.monitor.sync.task.ScheduledTaskManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -294,7 +296,7 @@ class MonitorService private constructor(
 
     private suspend fun configureWebDavDirect(
         server: youyou.monitor.screen.core.domain.model.WebDavServer,
-        client: youyou.monitor.screen.infra.network.WebDavClient
+        client: youyou.monitor.webdav.WebDavClient
     ) = withContext(Dispatchers.IO) {
         try {
             Log.i(TAG, "正在使用最快的WebDAV服务器: ${server.url}")

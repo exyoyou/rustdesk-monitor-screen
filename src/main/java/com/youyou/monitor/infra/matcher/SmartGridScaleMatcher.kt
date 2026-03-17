@@ -3,8 +3,8 @@ package youyou.monitor.screen.infra.matcher
 import android.content.Context
 import android.graphics.BitmapFactory
 import youyou.monitor.screen.core.domain.model.MatchResult
-import youyou.monitor.screen.core.domain.model.MonitorConfig
-import youyou.monitor.screen.core.domain.repository.ConfigRepository
+import youyou.monitor.config.model.MonitorConfig
+import youyou.monitor.config.repository.ConfigRepository
 import youyou.monitor.screen.core.matcher.TemplateMatcher
 import youyou.monitor.logger.Log
 import org.opencv.android.Utils

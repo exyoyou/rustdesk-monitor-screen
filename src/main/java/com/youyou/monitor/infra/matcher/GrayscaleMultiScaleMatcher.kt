@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import youyou.monitor.screen.core.domain.model.MatchResult
-import youyou.monitor.screen.core.domain.repository.ConfigRepository
+import youyou.monitor.config.repository.ConfigRepository
 import youyou.monitor.screen.core.matcher.TemplateMatcher
 import youyou.monitor.logger.Log
 import org.opencv.android.Utils

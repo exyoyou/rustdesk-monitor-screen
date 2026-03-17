@@ -1,8 +1,8 @@
 package youyou.monitor.screen.di
 
 import android.content.Context
-import youyou.monitor.screen.core.domain.repository.ConfigRepository
-import youyou.monitor.screen.core.domain.repository.StorageRepository
+import youyou.monitor.config.repository.ConfigRepository
+import youyou.monitor.sync.storage.StorageRepository
 import youyou.monitor.screen.core.domain.repository.TemplateRepository
 import youyou.monitor.screen.core.domain.usecase.CleanStorageUseCase
 import youyou.monitor.screen.core.domain.usecase.ManageTemplatesUseCase
@@ -10,10 +10,13 @@ import youyou.monitor.screen.core.matcher.TemplateMatcher
 import youyou.monitor.screen.core.matcher.TemplateMatcherManager
 import youyou.monitor.logger.Log
 import youyou.monitor.screen.infra.processor.AdvancedFrameProcessor
-import youyou.monitor.screen.infra.repository.ConfigRepositoryImpl
-import youyou.monitor.screen.infra.repository.StorageRepositoryImpl
 import youyou.monitor.screen.infra.repository.TemplateRepositoryImpl
-import youyou.monitor.screen.infra.task.ScheduledTaskManager
+import youyou.monitor.screen.infra.sync.TemplateSyncRepositoryAdapter
+import youyou.monitor.sync.config.ConfigRepositoryImpl
+import youyou.monitor.sync.storage.StorageRepositoryImpl as SyncStorageRepositoryImpl
+import youyou.monitor.sync.repository.StorageSyncRepository
+import youyou.monitor.sync.repository.TemplateSyncRepository
+import youyou.monitor.sync.task.ScheduledTaskManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.error.KoinAppAlreadyStartedException
@@ -24,7 +27,7 @@ import org.koin.dsl.module
  */
 val monitorModule = module {
     single {
-        ConfigRepositoryImpl(androidContext(), get())
+        ConfigRepositoryImpl(androidContext(), youyou.monitor.screen.BuildConfig.DEBUG)
     }
 
     single<ConfigRepository> {
@@ -32,7 +35,7 @@ val monitorModule = module {
     }
 
     single<StorageRepository> {
-        StorageRepositoryImpl(androidContext())
+        SyncStorageRepositoryImpl(androidContext())
     }
 
     single<TemplateMatcherManager> {
@@ -49,6 +52,14 @@ val monitorModule = module {
 
     single<TemplateRepository> {
         get<TemplateRepositoryImpl>()
+    }
+
+    single<StorageSyncRepository> {
+        get<StorageRepository>()
+    }
+
+    single<TemplateSyncRepository> {
+        TemplateSyncRepositoryAdapter(get())
     }
 
     single<AdvancedFrameProcessor> {
