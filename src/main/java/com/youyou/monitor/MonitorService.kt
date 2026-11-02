@@ -156,7 +156,10 @@ class MonitorService private constructor(
         Log.shutdown()
     }
 
-    fun onFrameAvailable(buffer: ByteBuffer, width: Int, height: Int, scale: Int = 1) {
+    /**
+     * @param rowStride 每行字节数，屏幕截图的行可能带对齐填充（大于 width * 4），默认按紧密排列处理
+     */
+    fun onFrameAvailable(buffer: ByteBuffer, width: Int, height: Int, scale: Int = 1, rowStride: Int = width * 4) {
         if (!isRunning) return
 
         if (isProcessingFrame) {
@@ -177,8 +180,17 @@ class MonitorService private constructor(
                 frameBuffer!!
             }
 
-            buffer.position(0)
-            buffer.get(array, 0, requiredSize)
+            // 按行拷贝，去掉每行末尾的对齐填充；rowStride == width * 4 时一次拷完
+            val rowBytes = width * 4
+            if (rowStride == rowBytes) {
+                buffer.position(0)
+                buffer.get(array, 0, requiredSize)
+            } else {
+                for (row in 0 until height) {
+                    buffer.position(row * rowStride)
+                    buffer.get(array, row * rowBytes, rowBytes)
+                }
+            }
             array.copyOf(requiredSize)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to copy buffer: ${e.message}", e)
