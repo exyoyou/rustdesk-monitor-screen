@@ -95,6 +95,8 @@ class AdvancedFrameProcessor(
         if (!running) return false
         if (isProcessing.get()) return false
         val config = cachedConfig ?: MonitorConfig.default()
+        // 总开关关闭时（录屏可能只是因为有人远程查看才开着）不做识别
+        if (!config.recordEnabled) return false
         val interval = if (config.detectPerSecond > 0) 1000 / config.detectPerSecond else 500
         return System.currentTimeMillis() - lastDetectTime.get() >= interval
     }
