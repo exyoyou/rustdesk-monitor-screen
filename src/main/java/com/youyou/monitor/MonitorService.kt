@@ -152,21 +152,29 @@ class MonitorService private constructor(
         } catch (e: Exception) {
             Log.w(TAG, "释放TemplateMatcherManager失败: ${e.message}")
         }
+        isProcessingFrame = false
 
-        Log.shutdown()
+//        Log.shutdown()
     }
 
     /**
      * @param rowStride 每行字节数，屏幕截图的行可能带对齐填充（大于 width * 4），默认按紧密排列处理
      */
     fun onFrameAvailable(buffer: ByteBuffer, width: Int, height: Int, scale: Int = 1, rowStride: Int = width * 4) {
-        if (!isRunning) return
-
-        if (isProcessingFrame) {
+        if (!isRunning) {
+//            Log.d(TAG, "识别服务没有开启直接返回")
             return
         }
 
-        if (!advancedFrameProcessor.canProcessNow()) return
+        if (isProcessingFrame) {
+//            Log.d(TAG, "正在处理上一个图片信息")
+            return
+        }
+
+        if (!advancedFrameProcessor.canProcessNow()) {
+//            Log.d(TAG, "判断处理当前 不过通 可能配置没有打开 可能时间太快没到。。。。。")
+            return
+        }
 
         isProcessingFrame = true
 

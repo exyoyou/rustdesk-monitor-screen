@@ -7,11 +7,14 @@ import youyou.monitor.config.repository.ConfigRepository
 import youyou.monitor.sync.storage.StorageRepository
 import youyou.monitor.screen.core.matcher.TemplateMatcherManager
 import youyou.monitor.logger.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.opencv.android.Utils
@@ -36,20 +39,36 @@ class AdvancedFrameProcessor(
 ) {
     private val TAG = "AdvancedFrameProcessor"
 
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private var scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     @Volatile
     private var cachedConfig: MonitorConfig? = null
 
+    private val scopeLock = Any()
+    private var configJob: Job? = null
+
     init {
-        scope.launch {
-            try {
-                configRepository.getConfigFlow().collect { config ->
-                    cachedConfig = config
-                    Log.d(TAG, "配置已更新：每秒检测次数=${config.detectPerSecond}")
+        startConfigCollection()
+    }
+
+    // shutdown() 会取消 scope，重新启动时必须重建 scope 并重新收集配置，否则 cachedConfig 永远停在旧值
+    private fun startConfigCollection() {
+        synchronized(scopeLock) {
+            if (!scope.isActive) {
+                scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+            }
+            if (configJob?.isActive == true) return
+            configJob = scope.launch {
+                try {
+                    configRepository.getConfigFlow().collect { config ->
+                        cachedConfig = config
+                        Log.d(TAG, "配置已更新：每秒检测次数=${config.detectPerSecond}, recordEnabled=${config.recordEnabled}")
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "收集配置时出错：${e.message}", e)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "收集配置时出错：${e.message}", e)
             }
         }
     }
@@ -308,6 +327,7 @@ class AdvancedFrameProcessor(
     }
 
     fun reset() {
+        startConfigCollection()
         running = true
         lastDetectTime.set(0L)
         lastForceSaveTime.set(0L)
@@ -321,8 +341,9 @@ class AdvancedFrameProcessor(
 
     fun shutdown() {
         running = false
+        isProcessing.set(false)
         timestampFormat.remove()
-        scope.cancel()
+        synchronized(scopeLock) { scope.cancel() }
         Log.d(TAG, "AdvancedFrameProcessor shutdown")
     }
 }
