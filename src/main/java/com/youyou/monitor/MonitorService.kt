@@ -92,8 +92,8 @@ class MonitorService private constructor(
                 existingScope
             } else {
                 val newJob = SupervisorJob()
-                val dispatcher = if (isRunning) Dispatchers.Main else Dispatchers.Default
-                val newScope = CoroutineScope(dispatcher + newJob)
+                // 识别是 CPU 密集任务，不能放到主线程（会和 Flutter UI 抢线程）
+                val newScope = CoroutineScope(Dispatchers.Default + newJob)
                 scope = newScope
                 scopeJob = newJob
                 newScope
@@ -178,8 +178,16 @@ class MonitorService private constructor(
             return
         }
 
+        // 在原始缓冲上判断重复帧，重复就不必复制整屏数据
+        val signature = advancedFrameProcessor.computeSignature(buffer, width, height, rowStride)
+        if (advancedFrameProcessor.isDuplicate(signature)) {
+            return
+        }
+
         isProcessingFrame = true
 
+        // 复用 frameBuffer，不再另外复制：isProcessingFrame 保证上一帧处理完之前不会覆盖它。
+        // 数组可能比本帧大（分辨率变小时），有效数据是前 width * height * 4 字节
         val data = try {
             val requiredSize = width * height * 4
 
@@ -201,7 +209,7 @@ class MonitorService private constructor(
                     buffer.get(array, row * rowBytes, rowBytes)
                 }
             }
-            array.copyOf(requiredSize)
+            array
         } catch (e: Exception) {
             Log.e(TAG, "Failed to copy buffer: ${e.message}", e)
             isProcessingFrame = false
@@ -212,7 +220,7 @@ class MonitorService private constructor(
             getScope().launch {
                 try {
                     val frame = ImageFrame(width, height, data, scale)
-                    advancedFrameProcessor.onFrameAvailable(frame)
+                    advancedFrameProcessor.onFrameAvailable(frame, signature)
                 } catch (e: Exception) {
                     Log.e(TAG, "Frame processing failed: ${e.message}", e)
                 } finally {

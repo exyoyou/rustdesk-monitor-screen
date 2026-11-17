@@ -17,8 +17,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.opencv.android.Utils
 import org.opencv.core.Core
+import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.MatOfDouble
 import org.opencv.imgproc.Imgproc
@@ -80,6 +80,7 @@ class AdvancedFrameProcessor(
     private val frameCallCount = AtomicLong(0L)
     private val lastLogTime = AtomicLong(0L)
     private val isProcessing = AtomicBoolean(false)
+    @Volatile
     private var running = true
 
     val isBusy: Boolean
@@ -93,10 +94,13 @@ class AdvancedFrameProcessor(
         private const val FORCE_SAVE_INTERVAL = 30 * 60 * 1000L
         private const val LOG_INTERVAL = 10000L
         private const val MIN_STDDEV = 5.0
+        private const val SIGNATURE_GRID = 16
+        private const val FNV_OFFSET = -0x340d631b7bdddcdbL // 0xcbf29ce484222325
+        private const val FNV_PRIME = 0x100000001b3L
     }
 
-    suspend fun onFrameAvailable(frame: ImageFrame): Boolean = withContext(Dispatchers.IO) {
-        val started = tryBeginProcessing(frame)
+    suspend fun onFrameAvailable(frame: ImageFrame, signature: Long): Boolean = withContext(Dispatchers.IO) {
+        val started = tryBeginProcessing(signature)
         if (!started) return@withContext false
 
         val now = System.currentTimeMillis()
@@ -120,7 +124,7 @@ class AdvancedFrameProcessor(
         return System.currentTimeMillis() - lastDetectTime.get() >= interval
     }
 
-    suspend fun tryBeginProcessing(frame: ImageFrame): Boolean = withContext(Dispatchers.IO) {
+    suspend fun tryBeginProcessing(signature: Long): Boolean = withContext(Dispatchers.IO) {
         val count = frameCallCount.incrementAndGet()
 
         if (isProcessing.get()) {
@@ -151,12 +155,6 @@ class AdvancedFrameProcessor(
             return@withContext false
         }
 
-        val signature = calculateFrameSignature(frame)
-        if (signature == null) {
-            Log.e(TAG, "[跳过] 签名计算失败")
-            return@withContext false
-        }
-
         if (signature == lastFrameSignature.get()) {
             if (count % 50L == 0L) {
                 Log.d(TAG, "[跳过] 重复帧 (签名: $signature)")
@@ -167,44 +165,31 @@ class AdvancedFrameProcessor(
         lastDetectTime.set(now)
         lastFrameSignature.set(signature)
         isProcessing.set(true)
-
-        Log.d(TAG, "[开始] 已获取处理权限: ${frame.width}x${frame.height}, 签名=$signature")
         true
     }
 
-    private fun calculateFrameSignature(frame: ImageFrame): Long? {
-        return try {
-            val width = frame.width
-            val height = frame.height
-            val buffer = ByteBuffer.wrap(frame.data)
+    /** 和上次处理过的帧签名相同（画面没变），可以直接跳过 */
+    fun isDuplicate(signature: Long): Boolean = signature == lastFrameSignature.get()
 
-            val halfWidth = width / 2
-            val halfHeight = height / 2
-            val lastRow = height - 1
-            val lastCol = width - 1
-
-            var sig = 0L
-            val pixels = intArrayOf(
-                0, halfWidth, lastCol,
-                halfHeight * width, halfHeight * width + halfWidth, halfHeight * width + lastCol,
-                lastRow * width, lastRow * width + halfWidth, lastRow * width + lastCol
-            )
-
-            for (i in pixels.indices) {
-                val offset = pixels[i] * 4
-                if (offset + 2 < buffer.capacity()) {
-                    val r = buffer.get(offset).toInt() and 0xFF
-                    val g = buffer.get(offset + 1).toInt() and 0xFF
-                    val b = buffer.get(offset + 2).toInt() and 0xFF
-                    val gray = (r + g + b) / 3
-                    sig = sig or (gray.toLong() shl (i * 7))
+    /**
+     * 帧签名：在画面上均匀取 SIGNATURE_GRID x SIGNATURE_GRID 个像素的 RGB 做 FNV-1a 哈希。
+     * 直接读原始缓冲（绝对位置读取，不改变缓冲的 position），重复帧不必复制整屏数据。
+     */
+    fun computeSignature(buffer: ByteBuffer, width: Int, height: Int, rowStride: Int): Long {
+        var hash = FNV_OFFSET
+        val limit = buffer.limit()
+        for (gy in 0 until SIGNATURE_GRID) {
+            val y = (height - 1) * gy / (SIGNATURE_GRID - 1)
+            for (gx in 0 until SIGNATURE_GRID) {
+                val x = (width - 1) * gx / (SIGNATURE_GRID - 1)
+                val offset = y * rowStride + x * 4
+                if (offset + 2 >= limit) continue
+                for (c in 0 until 3) {
+                    hash = (hash xor (buffer.get(offset + c).toLong() and 0xFF)) * FNV_PRIME
                 }
             }
-            sig
-        } catch (e: Exception) {
-            Log.e(TAG, "签名计算错误：${e.message}")
-            null
         }
+        return hash
     }
 
     private suspend fun processFrameInternal(
@@ -213,17 +198,23 @@ class AdvancedFrameProcessor(
         config: MonitorConfig
     ) {
         var bmp: Bitmap? = null
+        var rgba: Mat? = null
         var mat: Mat? = null
-        var resized: Mat? = null
+
+        // 只有需要保存截图时才创建 Bitmap，大多数帧只做识别不保存
+        fun bitmap(): Bitmap = bmp ?: Bitmap.createBitmap(frame.width, frame.height, Bitmap.Config.ARGB_8888).also {
+            it.copyPixelsFromBuffer(ByteBuffer.wrap(frame.data, 0, frame.width * frame.height * 4))
+            bmp = it
+        }
 
         try {
-            bmp = Bitmap.createBitmap(frame.width, frame.height, Bitmap.Config.ARGB_8888)
-            val buf = ByteBuffer.wrap(frame.data)
-            bmp.copyPixelsFromBuffer(buf)
-
+            // 直接用 RGBA 字节构造 Mat 再转灰度，省掉 Bitmap 和 bitmapToMat 两次整屏复制
+            rgba = Mat(frame.height, frame.width, CvType.CV_8UC4)
+            rgba.put(0, 0, frame.data, 0, frame.width * frame.height * 4)
             mat = Mat()
-            Utils.bitmapToMat(bmp, mat)
-            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGBA2GRAY)
+            Imgproc.cvtColor(rgba, mat, Imgproc.COLOR_RGBA2GRAY)
+            rgba.release()
+            rgba = null
 
             val processedMat = mat
 
@@ -233,7 +224,7 @@ class AdvancedFrameProcessor(
             }
 
             if (now - lastForceSaveTime.get() > FORCE_SAVE_INTERVAL) {
-                saveBitmap(bmp, "forced")
+                saveBitmap(bitmap(), "forced")
                 lastForceSaveTime.set(now)
                 Log.i(TAG, "强制保存有效截图")
             }
@@ -246,7 +237,7 @@ class AdvancedFrameProcessor(
 
             val matchResult = templateMatcherManager.getMatcher().match(processedMat, frame.scale)
             if (matchResult != null) {
-                saveBitmap(bmp, matchResult.templateName)
+                saveBitmap(bitmap(), matchResult.templateName)
                 lastMatchTime.set(now)
                 Log.i(TAG, "匹配已保存：${matchResult.templateName}")
             }
@@ -254,9 +245,9 @@ class AdvancedFrameProcessor(
             Log.e(TAG, "processFrame 错误：${e.message}")
         } finally {
             try {
-                resized?.release()
+                rgba?.release()
             } catch (e: Exception) {
-                Log.e(TAG, "释放调整大小的 mat 时出错：${e.message}")
+                Log.e(TAG, "释放 rgba mat 时出错：${e.message}")
             }
 
             try {
@@ -313,7 +304,7 @@ class AdvancedFrameProcessor(
         try {
             val timestamp = timestampFormat.get()!!.format(Date())
             val nameNoExt = templateName.substringBeforeLast('.')
-            val filename = "capture_${nameNoExt}_$timestamp.png"
+            val filename = "capture_${nameNoExt}_$timestamp.jpg"
 
             val result = storageRepository.saveScreenshot(bmp, filename)
             result.onSuccess {
