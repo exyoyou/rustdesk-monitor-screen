@@ -4,7 +4,7 @@ import java.io.File
 
 object TemplateFileUtil {
     val REMOTE_IMAGE_EXTENSIONS = setOf("png", "jpg", "jpeg")
-    val LOCAL_IMAGE_EXTENSIONS = REMOTE_IMAGE_EXTENSIONS + setOf("tmp_png", "tmp_jpg")
+    val LOCAL_IMAGE_EXTENSIONS = REMOTE_IMAGE_EXTENSIONS + setOf("tmp_png", "tmp_jpg", "tmp_jpeg")
 
     fun isRemoteImageName(name: String): Boolean {
         val idx = name.lastIndexOf('.')

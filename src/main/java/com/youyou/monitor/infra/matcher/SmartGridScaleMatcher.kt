@@ -223,7 +223,9 @@ class SmartGridScaleMatcher(
 
     private fun getTemplateDirectory(config: MonitorConfig): File {
         val root = if (config.preferExternalStorage) {
-            File("/storage/emulated/0", config.rootDir)
+            // 和 StorageRepositoryImpl 一致：外部存储不可写时模板保存在内部存储
+            File("/storage/emulated/0", config.rootDir).takeIf { it.exists() && it.canWrite() }
+                ?: File(context.filesDir, config.rootDir)
         } else {
             File(context.filesDir, config.rootDir)
         }

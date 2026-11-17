@@ -69,8 +69,7 @@ class GrayscaleMultiScaleMatcher(
         }
 
         val files = templateDir.listFiles { f ->
-            f.isFile && (f.name.endsWith(".png", ignoreCase = true) ||
-                f.name.endsWith(".jpg", ignoreCase = true))
+            f.isFile && TemplateFileUtil.isLocalImageFile(f)
         } ?: emptyArray()
 
         val bitmaps = mutableListOf<Bitmap>()
@@ -110,17 +109,22 @@ class GrayscaleMultiScaleMatcher(
     }
 
     override suspend fun match(grayMat: Mat, scale: Int): MatchResult? {
-        val (templates, names) = lock.read {
-            Pair(templateGrays, templateNames)
-        }
+        val threshold = configRepository.getCurrentConfig().matchThreshold
+        // 整个匹配过程持有读锁：loadTemplates()/release() 拿写锁释放旧 Mat，必须等匹配结束，否则 native 层会访问已释放内存
+        return lock.read { matchLocked(grayMat, threshold, templateGrays, templateNames) }
+    }
 
+    private fun matchLocked(
+        grayMat: Mat,
+        threshold: Double,
+        templates: List<Mat>,
+        names: List<String>
+    ): MatchResult? {
         if (templates.isEmpty()) {
             Log.w(TAG, "未加载任何模板")
             return null
         }
 
-        val config = configRepository.getCurrentConfig()
-        val threshold = config.matchThreshold
         val weakThreshold = threshold - WEAK_MATCH_OFFSET
 
         for ((idx, tmpl) in templates.withIndex()) {
