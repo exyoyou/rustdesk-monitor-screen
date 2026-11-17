@@ -224,7 +224,7 @@ class AdvancedFrameProcessor(
             }
 
             if (now - lastForceSaveTime.get() > FORCE_SAVE_INTERVAL) {
-                saveBitmap(bitmap(), "forced")
+                saveBitmap(bitmap(), "forced", config.screenshotFormat)
                 lastForceSaveTime.set(now)
                 Log.i(TAG, "强制保存有效截图")
             }
@@ -237,7 +237,7 @@ class AdvancedFrameProcessor(
 
             val matchResult = templateMatcherManager.getMatcher().match(processedMat, frame.scale)
             if (matchResult != null) {
-                saveBitmap(bitmap(), matchResult.templateName)
+                saveBitmap(bitmap(), matchResult.templateName, config.screenshotFormat)
                 lastMatchTime.set(now)
                 Log.i(TAG, "匹配已保存：${matchResult.templateName}")
             }
@@ -300,11 +300,11 @@ class AdvancedFrameProcessor(
         }
     }
 
-    private suspend fun saveBitmap(bmp: Bitmap, templateName: String) {
+    private suspend fun saveBitmap(bmp: Bitmap, templateName: String, format: String) {
         try {
             val timestamp = timestampFormat.get()!!.format(Date())
             val nameNoExt = templateName.substringBeforeLast('.')
-            val filename = "capture_${nameNoExt}_$timestamp.jpg"
+            val filename = "capture_${nameNoExt}_$timestamp.$format"
 
             val result = storageRepository.saveScreenshot(bmp, filename)
             result.onSuccess {
