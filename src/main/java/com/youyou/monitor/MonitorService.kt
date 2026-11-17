@@ -31,21 +31,20 @@ class MonitorService private constructor(
         @Volatile
         private var instance: MonitorService? = null
 
+        /**
+         * 只加载 OpenCV 并创建实例；日志和 Koin 由调用方（monitor-runtime）先初始化。
+         */
         fun init(context: Context) {
             if (instance == null) {
                 synchronized(this) {
                     if (instance == null) {
                         try {
-                            Log.init(context)
-                            Log.i(TAG, "日志系统初始化完成")
-
                             if (!OpenCVLoader.initDebug()) {
                                 Log.e(TAG, "OpenCV初始化失败！")
                                 throw RuntimeException("OpenCV initialization failed")
                             }
                             Log.i(TAG, "OpenCV初始化成功")
 
-                            youyou.monitor.screen.di.initKoin(context)
                             instance = MonitorService(context.applicationContext)
 
                             Log.i(TAG, "MonitorService初始化成功")
@@ -57,6 +56,9 @@ class MonitorService private constructor(
                 }
             }
         }
+
+        /** OpenCV 已加载（识别可用） */
+        fun isOpenCvReady(): Boolean = instance != null
 
         fun getInstance(): MonitorService {
             return instance ?: throw IllegalStateException(

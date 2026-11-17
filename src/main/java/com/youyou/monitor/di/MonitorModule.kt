@@ -47,7 +47,7 @@ val monitorModule = module {
     }
 
     single {
-        TemplateRepositoryImpl(androidContext(), get(), get())
+        TemplateRepositoryImpl(androidContext(), get(), lazy { get<TemplateMatcherManager>() })
     }
 
     single<TemplateRepository> {

@@ -22,7 +22,8 @@ import java.io.File
 class TemplateRepositoryImpl(
     private val context: Context,
     private val storageRepository: StorageRepository,
-    private val matcherManager: TemplateMatcherManager
+    // 延迟创建：匹配器会用到 OpenCV，常驻的模板同步不能提前触发它
+    private val matcherManager: Lazy<TemplateMatcherManager>
 ) : TemplateRepository {
 
     companion object {
@@ -98,9 +99,13 @@ class TemplateRepositoryImpl(
 
     override fun notifyTemplatesUpdated() {
         try {
+            // 识别没开（OpenCV 未加载）时不用重载，下次开启识别创建匹配器时会从磁盘加载最新模板
+            if (!youyou.monitor.screen.MonitorService.isOpenCvReady()) {
+                return
+            }
             Log.d(TAG, "正在通知模板更新...")
             scope.launch(Dispatchers.IO) {
-                matcherManager.getMatcher().reloadTemplates()
+                matcherManager.value.getMatcher().reloadTemplates()
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to notify template update: ${e.message}", e)
